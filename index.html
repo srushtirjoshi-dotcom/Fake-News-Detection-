@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fake News Detector AI</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 40px;
+      color: white;
+
+      background:
+        linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.75)),
+        url("https://images.unsplash.com/photo-1495020689067-958852a7765e") no-repeat center/cover;
+
+      overflow-y: auto;
+    }
+
+    .top-bar {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+    }
+
+    .quiz-top-btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: none;
+      background: #f59e0b;
+      color: white;
+      cursor: pointer;
+    }
+
+    .container {
+      width: 650px;
+      padding: 30px;
+      border-radius: 18px;
+      background: linear-gradient(145deg, #1e293b, #111827);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      border-radius: 10px;
+      padding: 10px;
+      background: #020617;
+      color: white;
+      border: 1px solid #334155;
+    }
+
+    .analyze-btn {
+      display: block;
+      margin: 20px auto;
+      padding: 12px 28px;
+      border-radius: 10px;
+      border: none;
+      background: #22c55e;
+      color: white;
+      cursor: pointer;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      display: none;
+      background: #020617;
+      border-left: 5px solid #22c55e;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Quiz */
+    .quiz-card {
+      background: #020617;
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+    }
+
+    .quiz-btn {
+      margin: 5px;
+      padding: 8px 15px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #1f2937;
+      color: white;
+    }
+
+    .selected-real {
+      background: #22c55e;
+    }
+
+    .selected-fake {
+      background: #ef4444;
+    }
+
+    /* Result colors */
+    .correct {
+      border: 2px solid #22c55e;
+    }
+
+    .wrong {
+      border: 2px solid #ef4444;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="top-bar">
+  <button class="quiz-top-btn" onclick="showQuiz()">🎯 Quiz</button>
+</div>
+
+<!-- MAIN -->
+<div id="mainSection" class="container">
+  <h1>🧠 Fake News Detector</h1>
+
+  <textarea id="news" placeholder="Paste news here..."></textarea>
+
+  <button class="analyze-btn" onclick="detect()">Analyze</button>
+
+  <div id="result" class="result"></div>
+</div>
+
+<!-- QUIZ -->
+<div id="quizSection" class="container hidden">
+  <h1>🎯 Fake News Quiz</h1>
+
+  <div id="quiz"></div>
+
+  <button onclick="submitQuiz()">Submit Quiz</button>
+  <button onclick="goBack()">⬅ Back</button>
+
+  <div id="score" style="margin-top:15px;"></div>
+</div>
+
+<script>
+
+/* NAVIGATION */
+function showQuiz() {
+  document.getElementById("mainSection").classList.add("hidden");
+  document.getElementById("quizSection").classList.remove("hidden");
+}
+
+function goBack() {
+  document.getElementById("quizSection").classList.add("hidden");
+  document.getElementById("mainSection").classList.remove("hidden");
+}
+
+/* DETECTOR */
+async function detect() {
+  const news = document.getElementById("news").value;
+  const resultDiv = document.getElementById("result");
+
+  if (!news.trim()) {
+    alert("Enter news text!");
+    return;
+  }
+
+  const res = await fetch("http://localhost:3000/detect", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ news })
+  });
+
+  const data = await res.json();
+
+  resultDiv.style.display = "block";
+  resultDiv.innerText = "Prediction: " + data.result;
+}
+
+/* QUIZ DATA */
+const quizData = [
+  { text: "Scientists discover water on Mars", answer: "real" },
+  { text: "Aliens open restaurant in Delhi", answer: "fake" },
+  { text: "AI used in hospitals for diagnosis", answer: "real" },
+  { text: "Humans can fly after new surgery", answer: "fake" },
+  { text: "India launches new satellite", answer: "real" },
+  { text: "Time travel machine tested successfully", answer: "fake" },
+  { text: "Online learning increases globally", answer: "real" },
+  { text: "Chocolate cures all diseases", answer: "fake" },
+  { text: "Electric cars gaining popularity", answer: "real" },
+  { text: "Earth will stop rotating tomorrow", answer: "fake" }
+];
+
+let userAnswers = [];
+
+/* LOAD QUIZ */
+function loadQuiz() {
+  const quizDiv = document.getElementById("quiz");
+  quizDiv.innerHTML = "";
+
+  quizData.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.className = "quiz-card";
+    div.id = "q-" + i;
+
+    div.innerHTML = `
+      <p>${i+1}. ${q.text}</p>
+      <button id="real-${i}" class="quiz-btn">Real</button>
+      <button id="fake-${i}" class="quiz-btn">Fake</button>
+    `;
+
+    quizDiv.appendChild(div);
+
+    document.getElementById(`real-${i}`).onclick = () => selectAnswer(i, 'real');
+    document.getElementById(`fake-${i}`).onclick = () => selectAnswer(i, 'fake');
+  });
+}
+
+/* SELECT */
+function selectAnswer(index, value) {
+  userAnswers[index] = value;
+
+  const realBtn = document.getElementById(`real-${index}`);
+  const fakeBtn = document.getElementById(`fake-${index}`);
+
+  realBtn.classList.remove("selected-real");
+  fakeBtn.classList.remove("selected-fake");
+
+  if (value === 'real') {
+    realBtn.classList.add("selected-real");
+  } else {
+    fakeBtn.classList.add("selected-fake");
+  }
+}
+
+/* SUBMIT */
+function submitQuiz() {
+  let score = 0;
+
+  quizData.forEach((q, i) => {
+    const card = document.getElementById("q-" + i);
+
+    if (userAnswers[i] === q.answer) {
+      score++;
+      card.classList.add("correct");
+    } else {
+      card.classList.add("wrong");
+    }
+  });
+
+  document.getElementById("score").innerText =
+    "Your Score: " + score + " / 10";
+}
+
+loadQuiz();
+
+</script>
+
+</body>
+</html>
