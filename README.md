@@ -55,6 +55,14 @@ node server.js
 3. Open `index.html` in your browser.
 
 ---
+## 🔐 Environment Setup
+
+Create a `.env` file in the root directory and add:
+
+API_KEY=your_api_key_here  
+PORT=3000
+
+(Note: API key will be provided separately)
 
 ## 🎯 Objective
 
